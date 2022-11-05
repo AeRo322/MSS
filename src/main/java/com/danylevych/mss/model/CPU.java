@@ -5,11 +5,6 @@ public class CPU {
     private PCB currentJob;
     private int runTime;
 
-    public CPU() {
-        setIdle();
-        runTime = 0;
-    }
-
     public boolean incrementRuntime() {
         final boolean isActive = isActive();
         if (isActive) {
@@ -18,8 +13,10 @@ public class CPU {
         return isActive;
     }
 
-    public void setIdle() {
-        currentJob = null;
+    public PCB setIdle() {
+        PCB oldJob = this.currentJob;
+        this.currentJob = null;
+        return oldJob;
     }
 
     public boolean isIdle() {

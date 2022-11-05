@@ -90,9 +90,9 @@ public class Computer {
     }
 
     private void addJobs() {
-        for (PCB pcb : jobs) {
-            if (pcb.getArrivalTime() == clock) {
-                sheduler.addJob(pcb);
+        for (PCB job : jobs) {
+            if (job.getArrivalTime() == clock) {
+                sheduler.addJob(job);
                 fireEvent(Event.ADD_JOB);
             }
         }
@@ -103,8 +103,7 @@ public class Computer {
             for (int i = 0; i < nCpu; i++) {
                 CPU cpu = cpus[i];
                 if (cpu.isActive() && sheduler.hasNextJob(i)) {
-                    cpu.setIdle();
-                    final int queue = sheduler.addJob(cpu.getCurrentJob());
+                    final int queue = sheduler.addJob(cpu.setIdle());
                     fireEvent(Event.INTERRUPT, queue);
                 }
             }
@@ -131,6 +130,7 @@ public class Computer {
                 fireEvent(Event.JOB_ASSIGNED, i);
             }
         }
+
         incrementWaitingTime();
     }
 
@@ -156,7 +156,6 @@ public class Computer {
         CPU cpu = cpus[cpuId];
         PCB currentJob = cpu.getCurrentJob();
         if (currentJob.decrementTimeleft()) {
-            cpu.setIdle();
             if (currentJob.nextIoBurst()) {
                 ioWaitingQueue.add(currentJob);
                 fireEvent(Event.IO_REQUEST, cpuId);
@@ -165,6 +164,7 @@ public class Computer {
                 currentJob.setFinishTime(clock + 1);
                 fireEvent(Event.JOB_DONE, cpuId);
             }
+            cpu.setIdle();
         }
     }
 
@@ -185,15 +185,15 @@ public class Computer {
         PCB currentJob = ioDevice.getCurrentJob();
         if (currentJob.decrementTimeleft()) {
             currentJob.nextCpuBurst();
+            ioDevice.setIdle();
             final int queue = sheduler.addJob(currentJob);
             fireEvent(Event.IO_DONE, queue);
-            ioDevice.setIdle();
         }
     }
 
     private void incrementClock() {
         clock++;
-        fireEvent(Event.CLOCK_INC, 0);
+        fireEvent(Event.SET_CLOCK, String.valueOf(clock));
     }
 
     private void fireEvent(Event event, Object param) {

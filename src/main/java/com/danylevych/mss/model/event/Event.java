@@ -2,7 +2,7 @@ package com.danylevych.mss.model.event;
 
 public enum Event {
 
-    CLOCK_INC,
+    SET_CLOCK,
     JOB_ASSIGNED,
     JOB_DONE,
     IO_DONE,

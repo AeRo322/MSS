@@ -15,6 +15,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 
@@ -54,7 +55,7 @@ public class MainController extends MainView implements EventListener {
     @Override
     public void handle(Event event) {
         switch (event) {
-        case CLOCK_INC -> incrementClock();
+        case SET_CLOCK -> setClock();
         case JOB_ASSIGNED -> assignJob();
         case JOB_DONE -> completeJob();
         case INTERRUPT -> interrupt();
@@ -67,98 +68,54 @@ public class MainController extends MainView implements EventListener {
     private void assignJob(int cpuId) {
         if (cpuId == -1) {
             String pName = computer.getIoDevice().getCurrentJob().getName();
-
-            highlight(jobRectangles.remove(pName), () -> {
+            highlight(jobShapes.remove(pName), () -> {
                 ioQueue.getChildren().remove(0);
-
-                highlight(ioCircle, () -> {
-                    ioLabel.setText(pName);
-                    continueSimulation();
-                });
+                highlight(setIoState(pName));
             });
         } else {
             String pName = computer.getCpu(cpuId).getCurrentJob().getName();
-
-            highlight(jobRectangles.remove(pName), () -> {
-                int i = computer.getSheduler().hasGlobalQueue() ? 0 : cpuId;
-                queueHBoxs.get(i).getChildren().remove(0);
-
-                highlight(cpuCircles.get(cpuId), () -> {
-                    cpuLabels.get(cpuId).setText(pName);
-                    continueSimulation();
-                });
+            highlight(jobShapes.remove(pName), () -> {
+                getCpuQueueHbox(cpuId).getChildren().remove(0);
+                highlight(setCpuState(pName, cpuId));
             });
         }
     }
 
     private void addIoJob(int cpuId) {
-        highlight(cpuCircles.get(cpuId), () -> {
-            cpuLabels.get(cpuId).setText(IDLE);
-
+        highlight(setCpuState(IDLE, cpuId), () -> {
             String pName = computer.getIoWaitingQueue().getLast().getName();
-
-            highlight(addJob(ioQueue, pName), this::continueSimulation);
+            highlight(addJob(ioQueue, pName));
         });
     }
 
-    private void completeIoJob(int queueId) {
-        highlight(ioCircle, () -> {
-            ioLabel.setText(IDLE);
-            highlight(addJob(queueId), this::continueSimulation);
-        });
+    private void completeIoJob(int cpuId) {
+        highlight(setIoState(IDLE), () -> highlight(addJob(cpuId)));
     }
 
     private void interrupt(int cpuId) {
-        highlight(cpuCircles.get(cpuId), () -> {
-            cpuLabels.get(cpuId).setText(IDLE);
-            highlight(addJob(cpuId), this::continueSimulation);
-        });
+        highlight(setCpuState(IDLE, cpuId), () -> highlight(addJob(cpuId)));
     }
 
     private void completeJob(int cpuId) {
-        highlight(cpuCircles.get(cpuId), () -> {
-            cpuLabels.get(cpuId).setText(IDLE);
-            continueSimulation();
-        });
+        highlight(setCpuState(IDLE, cpuId));
     }
 
-    private Rectangle addJob(int queueId) {
-        HBox queueHbox = queueHBoxs.get(queueId);
-        ProcessQueue queue = computer.getSheduler().getReadyQueue(queueId);
-        String pName = queue.getLast().getName();
-        return addJob(queueHbox, pName);
+    private Shape addJob(int cpuId) {
+        ProcessQueue queue = computer.getSheduler().getReadyQueue(cpuId);
+        return addJob(getCpuQueueHbox(cpuId), queue.getLast().getName());
     }
 
-    private Rectangle addJob(HBox queue, String pName) {
-        Label jobName = new Label(pName);
-
-        Rectangle jobShape = new Rectangle(25.0, 25.0, TRANSPARENT);
+    private Shape addJob(HBox queue, String pName) {
+        Shape jobShape = new Rectangle(25.0, 25.0, TRANSPARENT);
         jobShape.setStroke(BLACK);
 
-        jobRectangles.put(pName, jobShape);
+        jobShapes.put(pName, jobShape);
+        queue.getChildren().add(new StackPane(jobShape, new Label(pName)));
 
-        StackPane job = new StackPane(jobShape, jobName);
-        queue.getChildren().add(job);
-
-        return jobRectangles.get(pName);
+        return jobShape;
     }
 
-    private static void highlight(Shape shape, Runnable runAfter) {
-        Task<Void> pause = new Task<Void>() {
-            @Override
-            protected Void call() throws Exception {
-                shape.setStroke(RED);
-                Thread.sleep(1000L);
-                shape.setStroke(BLACK);
-                runAfter.run();
-                return null;
-            }
-        };
-
-        new Thread(pause).start();
-    }
-
-    private void incrementClock() {
+    private void setClock(String clock) {
         Task<Void> pause = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
@@ -170,13 +127,48 @@ public class MainController extends MainView implements EventListener {
 
         pause.setOnRunning(e -> clockLabel.setFill(RED));
         pause.setOnSucceeded(e -> {
-            clockLabel.setText(String.valueOf(computer.getClock()));
+            clockLabel.setText(clock);
             continueSimulation();
         });
         new Thread(pause).start();
     }
 
+    private void highlight(Shape shape) {
+        highlight(shape, this::continueSimulation);
+    }
+
+    private static void highlight(Shape shape, Runnable runAfter) {
+        Task<Void> highlight = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                shape.setStroke(RED);
+                Thread.sleep(1000L);
+                shape.setStroke(BLACK);
+                runAfter.run();
+                return null;
+            }
+        };
+
+        new Thread(highlight).start();
+    }
+
     private void continueSimulation() {
         computer.getCurrentTask().interrupt();
     }
+
+    private Circle setIoState(String state) {
+        ioLabel.setText(state);
+        return ioCircle;
+    }
+
+    private Circle setCpuState(String state, int cpuId) {
+        cpuLabels.get(cpuId).setText(state);
+        return cpuCircles.get(cpuId);
+    }
+
+    private HBox getCpuQueueHbox(int cpuId) {
+        final int queueId = computer.getSheduler().hasGlobalQueue() ? 0 : cpuId;
+        return queueHBoxs.get(queueId);
+    }
+
 }

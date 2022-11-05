@@ -25,7 +25,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.Shape;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
@@ -35,7 +35,7 @@ public class MainView {
 
     protected Stage tableWindow = new Stage();
 
-    protected Map<String, Rectangle> jobRectangles = new HashMap<>();
+    protected Map<String, Shape> jobShapes = new HashMap<>();
     protected List<Circle> cpuCircles = new LinkedList<>();
     protected List<Label> cpuLabels = new LinkedList<>();
     protected List<HBox> queueHBoxs = new LinkedList<>();
@@ -87,29 +87,27 @@ public class MainView {
 
     private void createQueuesView() {
         if (computer.getSheduler().hasGlobalQueue()) {
-            Label queueName = new Label("Глобальна черга");
-            createCpuQueue(queueName);
+            createCpuQueue(new Label("Глобальна черга"));
         } else {
-            final int nCpu = computer.cpuCount();
-            for (int i = 0; i < nCpu; i++) {
-                Label queueName = new Label("ЦП " + (i + 1));
-                createCpuQueue(queueName);
+            for (int i = 0; i < computer.cpuCount(); i++) {
+                createCpuQueue(new Label("ЦП " + (i + 1)));
             }
         }
+
         ioQueuesView.getChildren().add(ioQueue);
     }
 
     private void createCpuQueue(Label queueName) {
-        readyQueuesView.getChildren().add(queueName);
         HBox queue = new HBox();
         queue.setNodeOrientation(RIGHT_TO_LEFT);
+
         queueHBoxs.add(queue);
+        readyQueuesView.getChildren().add(queueName);
         readyQueuesView.getChildren().add(queue);
     }
 
     private void createIoView() {
-        StackPane ioDevice = new StackPane(ioCircle, ioLabel);
-        ioView.getChildren().add(ioDevice);
+        ioView.getChildren().add(new StackPane(ioCircle, ioLabel));
     }
 
     private void createCpuView() {
@@ -121,8 +119,7 @@ public class MainView {
             Label cpuLabel = new Label(IDLE);
             cpuLabels.add(cpuLabel);
 
-            StackPane cpu = new StackPane(circle, cpuLabel);
-            cpuView.getChildren().add(cpu);
+            cpuView.getChildren().add(new StackPane(circle, cpuLabel));
         }
 
         cpuView.setPrefColumns(idkMan(cpuCount));
