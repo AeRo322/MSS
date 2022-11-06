@@ -86,11 +86,17 @@ public class MainView {
     }
 
     private void createQueuesView() {
+        final int cpuCount = computer.cpuCount();
         if (computer.getSheduler().hasGlobalQueue()) {
-            createCpuQueue(new Label("Глобальна черга"));
+            Label queueName = new Label("Глобальна черга");
+            createCpuQueue(queueName);
+            for (int i = 0; i < cpuCount; i++) {
+                queueHBoxs.add(queueHBoxs.get(0));
+            }
         } else {
-            for (int i = 0; i < computer.cpuCount(); i++) {
-                createCpuQueue(new Label("ЦП " + (i + 1)));
+            for (int i = 0; i < cpuCount; i++) {
+                Label queueName = new Label("ЦП " + (i + 1));
+                createCpuQueue(queueName);
             }
         }
 
@@ -98,16 +104,18 @@ public class MainView {
     }
 
     private void createCpuQueue(Label queueName) {
-        HBox queue = new HBox();
-        queue.setNodeOrientation(RIGHT_TO_LEFT);
+        HBox queueHBox = new HBox();
+        queueHBox.setNodeOrientation(RIGHT_TO_LEFT);
 
-        queueHBoxs.add(queue);
+        queueHBoxs.add(queueHBox);
+
         readyQueuesView.getChildren().add(queueName);
-        readyQueuesView.getChildren().add(queue);
+        readyQueuesView.getChildren().add(queueHBox);
     }
 
     private void createIoView() {
-        ioView.getChildren().add(new StackPane(ioCircle, ioLabel));
+        StackPane ioDevice = new StackPane(ioCircle, ioLabel);
+        ioView.getChildren().add(ioDevice);
     }
 
     private void createCpuView() {

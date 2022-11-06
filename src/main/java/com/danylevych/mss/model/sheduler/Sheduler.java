@@ -21,4 +21,6 @@ public interface Sheduler {
 
     boolean hasGlobalQueue();
 
+    int getLastAddedJobPos();
+
 }

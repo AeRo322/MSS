@@ -4,6 +4,7 @@ import static javafx.scene.paint.Color.BLACK;
 import static javafx.scene.paint.Color.RED;
 import static javafx.scene.paint.Color.TRANSPARENT;
 
+import com.danylevych.mss.model.PCB;
 import com.danylevych.mss.model.ProcessQueue;
 import com.danylevych.mss.model.event.Event;
 import com.danylevych.mss.model.event.EventListener;
@@ -53,15 +54,15 @@ public class MainController extends MainView implements EventListener {
     }
 
     @Override
-    public void handle(Event event) {
+    public void handle(Event event, int param) {
         switch (event) {
-        case SET_CLOCK -> setClock();
-        case JOB_ASSIGNED -> assignJob();
-        case JOB_DONE -> completeJob();
-        case INTERRUPT -> interrupt();
-        case IO_REQUEST -> addIoJob();
-        case IO_DONE -> completeIoJob();
-        case ADD_JOB -> throw new UnsupportedOperationException();
+        case ADD_JOB -> addJob(param);
+        case SET_CLOCK -> setClock(param);
+        case INTERRUPT -> interrupt(param);
+        case IO_REQUEST -> addIoJob(param);
+        case JOB_DONE -> completeJob(param);
+        case IO_DONE -> completeIoJob(param);
+        case JOB_ASSIGNED -> assignJob(param);
         }
     }
 
@@ -75,7 +76,7 @@ public class MainController extends MainView implements EventListener {
         } else {
             String pName = computer.getCpu(cpuId).getCurrentJob().getName();
             highlight(jobShapes.remove(pName), () -> {
-                getCpuQueueHbox(cpuId).getChildren().remove(0);
+                queueHBoxs.get(cpuId).getChildren().remove(0);
                 highlight(setCpuState(pName, cpuId));
             });
         }
@@ -83,8 +84,9 @@ public class MainController extends MainView implements EventListener {
 
     private void addIoJob(int cpuId) {
         highlight(setCpuState(IDLE, cpuId), () -> {
-            String pName = computer.getIoWaitingQueue().getLast().getName();
-            highlight(addJob(ioQueue, pName));
+            PCB job = computer.getCpu(cpuId).getCurrentJob();
+            int pos = computer.getIoWaitingQueue().indexOf(job);
+            highlight(addJob(ioQueue, job.getName(), pos));
         });
     }
 
@@ -101,21 +103,24 @@ public class MainController extends MainView implements EventListener {
     }
 
     private Shape addJob(int cpuId) {
+        int pos = computer.getSheduler().getLastAddedJobPos();
         ProcessQueue queue = computer.getSheduler().getReadyQueue(cpuId);
-        return addJob(getCpuQueueHbox(cpuId), queue.getLast().getName());
+        return addJob(queueHBoxs.get(cpuId), queue.get(pos).getName(), pos);
     }
 
-    private Shape addJob(HBox queue, String pName) {
+    private Shape addJob(HBox queue, String pName, int pos) {
         Shape jobShape = new Rectangle(25.0, 25.0, TRANSPARENT);
         jobShape.setStroke(BLACK);
 
         jobShapes.put(pName, jobShape);
-        queue.getChildren().add(new StackPane(jobShape, new Label(pName)));
+
+        StackPane job = new StackPane(jobShape, new Label(pName));
+        queue.getChildren().add(pos, job);
 
         return jobShape;
     }
 
-    private void setClock(String clock) {
+    private void setClock(int clock) {
         Task<Void> pause = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
@@ -127,7 +132,7 @@ public class MainController extends MainView implements EventListener {
 
         pause.setOnRunning(e -> clockLabel.setFill(RED));
         pause.setOnSucceeded(e -> {
-            clockLabel.setText(clock);
+            clockLabel.setText(String.valueOf(clock));
             continueSimulation();
         });
         new Thread(pause).start();
@@ -164,11 +169,6 @@ public class MainController extends MainView implements EventListener {
     private Circle setCpuState(String state, int cpuId) {
         cpuLabels.get(cpuId).setText(state);
         return cpuCircles.get(cpuId);
-    }
-
-    private HBox getCpuQueueHbox(int cpuId) {
-        final int queueId = computer.getSheduler().hasGlobalQueue() ? 0 : cpuId;
-        return queueHBoxs.get(queueId);
     }
 
 }

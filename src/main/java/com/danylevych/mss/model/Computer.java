@@ -90,10 +90,11 @@ public class Computer {
     }
 
     private void addJobs() {
-        for (PCB job : jobs) {
+        final int nJobs = jobs.size();
+        for (int i = sheduler.getLastAddedJobPos(); i < nJobs; i++) {
+            PCB job = jobs.get(i);
             if (job.getArrivalTime() == clock) {
-                sheduler.addJob(job);
-                fireEvent(Event.ADD_JOB);
+                fireEvent(Event.ADD_JOB, sheduler.addJob(job));
             }
         }
     }
@@ -123,10 +124,10 @@ public class Computer {
             CPU cpu = cpus[i];
             if (cpu.isIdle() && sheduler.hasNextJob(i)) {
                 PCB nextJob = sheduler.nextJob(i);
-                cpu.assignJob(nextJob);
                 if (nextJob.hasNotRunYet()) {
                     nextJob.setFirstRunTime(clock);
                 }
+                cpu.assignJob(nextJob);
                 fireEvent(Event.JOB_ASSIGNED, i);
             }
         }
@@ -185,18 +186,17 @@ public class Computer {
         PCB currentJob = ioDevice.getCurrentJob();
         if (currentJob.decrementTimeleft()) {
             currentJob.nextCpuBurst();
+            fireEvent(Event.IO_DONE, sheduler.addJob(currentJob));
             ioDevice.setIdle();
-            final int queue = sheduler.addJob(currentJob);
-            fireEvent(Event.IO_DONE, queue);
         }
     }
 
     private void incrementClock() {
         clock++;
-        fireEvent(Event.SET_CLOCK, String.valueOf(clock));
+        fireEvent(Event.SET_CLOCK, clock);
     }
 
-    private void fireEvent(Event event, Object param) {
+    private void fireEvent(Event event, int param) {
         if (!listeners.isEmpty()) {
             Platform.runLater(() -> notify(event, param));
 
@@ -208,7 +208,7 @@ public class Computer {
         }
     }
 
-    private void notify(Event event, Object param) {
+    private void notify(Event event, int param) {
         for (EventListener listener : listeners) {
             listener.handle(event, param);
         }

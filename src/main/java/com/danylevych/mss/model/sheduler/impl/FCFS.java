@@ -14,6 +14,7 @@ public class FCFS implements Sheduler {
     private List<ProcessQueue> readyQueues = new ArrayList<>();
     private ProcessQueue globalQueue = new ProcessQueue();
     private final boolean hasGlobalQueue;
+    private int lastAddedJobPos;
 
     public FCFS(boolean hasGlobalQueue, int nCpu) {
         this.hasGlobalQueue = hasGlobalQueue;
@@ -34,12 +35,17 @@ public class FCFS implements Sheduler {
      */
     @Override
     public int addJob(PCB job) {
+        int queue = 0;
+
         if (hasGlobalQueue) {
             globalQueue.add(job);
-            return 0;
+        } else {
+            queue = addToLeastLoadedQueue(job);
         }
 
-        return addToLeastLoadedQueue(job);
+        lastAddedJobPos = getReadyQueue(queue).size() - 1;
+
+        return queue;
     }
 
     @Override
@@ -50,6 +56,7 @@ public class FCFS implements Sheduler {
             return null;
         }
 
+        lastAddedJobPos--;
         return queue.removeFirst();
     }
 
@@ -76,6 +83,11 @@ public class FCFS implements Sheduler {
     @Override
     public boolean hasGlobalQueue() {
         return this.hasGlobalQueue;
+    }
+
+    @Override
+    public int getLastAddedJobPos() {
+        return lastAddedJobPos;
     }
 
     private int addToLeastLoadedQueue(PCB job) {
