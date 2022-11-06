@@ -90,9 +90,7 @@ public class Computer {
     }
 
     private void addJobs() {
-        final int nJobs = jobs.size();
-        for (int i = sheduler.getLastAddedJobPos(); i < nJobs; i++) {
-            PCB job = jobs.get(i);
+        for (PCB job : jobs) {
             if (job.getArrivalTime() == clock) {
                 fireEvent(Event.ADD_JOB, sheduler.addJob(job));
             }

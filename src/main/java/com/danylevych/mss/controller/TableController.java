@@ -14,9 +14,9 @@ public class TableController {
     @FXML
     private TableView<PCB> table;
     @FXML
-    private TableColumn<PCB, String> tat;
-    @FXML
     private TableColumn<PCB, String> pid;
+    @FXML
+    private TableColumn<PCB, String> tat;
     @FXML
     private TableColumn<PCB, String> ioBursts;
     @FXML
@@ -25,21 +25,27 @@ public class TableController {
     private TableColumn<PCB, Integer> waitTime;
     @FXML
     private TableColumn<PCB, String> responseTime;
+    @FXML
+    private TableColumn<PCB, Integer> arrivalTime;
 
     public void setData(ObservableList<PCB> data) {
         table.setItems(data);
 
-        tat.setCellValueFactory(pcb -> pcb.getValue().tatProperty());
         pid.setCellValueFactory(pcb -> pcb.getValue().nameProperty());
+        tat.setCellValueFactory(pcb -> pcb.getValue().tatProperty());
+
+        arrivalTime.setCellValueFactory(
+                pcb -> pcb.getValue().getArrivalTimeProperty());
 
         waitTime.setCellValueFactory(
-                pcb -> pcb.getValue().waitingTimeProperty().asObject());
+                pcb -> pcb.getValue().waitingTimeProperty());
 
         responseTime.setCellValueFactory(
                 pcb -> pcb.getValue().responseTimeProperty());
 
         cpuBursts.setCellValueFactory(
                 pcb -> joinAndWrap(pcb.getValue().getCpuBurstsTime()));
+
         ioBursts.setCellValueFactory(
                 pcb -> joinAndWrap(pcb.getValue().getIoBurstsTime()));
     }

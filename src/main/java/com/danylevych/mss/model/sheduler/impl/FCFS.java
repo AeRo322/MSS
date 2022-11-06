@@ -4,6 +4,7 @@ import static com.danylevych.mss.util.ProcessQueueUtils.getSmallestQueue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import com.danylevych.mss.model.PCB;
 import com.danylevych.mss.model.ProcessQueue;
@@ -50,19 +51,17 @@ public class FCFS implements Sheduler {
 
     @Override
     public PCB nextJob(int cpu) {
-        ProcessQueue queue = readyQueues.get(cpu);
-
-        if (queue.isEmpty()) {
-            return null;
+        if (!hasNextJob(cpu)) {
+            throw new NoSuchElementException();
         }
 
         lastAddedJobPos--;
-        return queue.removeFirst();
+        return readyQueues.get(cpu).removeFirst();
     }
 
     @Override
     public boolean hasNextJob(int cpu) {
-        return nextJob(cpu) != null;
+        return !readyQueues.get(cpu).isEmpty();
     }
 
     @Override

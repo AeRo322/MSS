@@ -6,48 +6,53 @@ import static com.danylevych.mss.util.PerfEval.tat;
 import java.util.List;
 
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
 public class PCB {
 
-    private final IntegerProperty waitingTime;
     private final StringProperty responseTime;
+    private final IntegerProperty arrivalTime;
+    private final IntegerProperty waitingTime;
     private final StringProperty name;
     private final StringProperty tat;
 
     private final List<Integer> cpuBurstsTime;
     private final List<Integer> ioBurstsTime;
 
-    private final int arrivalTime;
     private int timeLeft;
 
     public PCB(int pid, int arrivalTime, List<Integer> cpuBurstsTime,
             List<Integer> ioBurstsTime) {
 
+        this.arrivalTime = new SimpleIntegerProperty(arrivalTime);
         this.name = new SimpleStringProperty("П" + pid);
-        this.waitingTime = new SimpleIntegerProperty();
         this.responseTime = new SimpleStringProperty();
+        this.waitingTime = new SimpleIntegerProperty();
         this.tat = new SimpleStringProperty();
 
         this.cpuBurstsTime = cpuBurstsTime;
         this.ioBurstsTime = ioBurstsTime;
 
         this.timeLeft = cpuBurstsTime.get(0);
-        this.arrivalTime = arrivalTime;
     }
 
-    public final StringProperty tatProperty() {
-        return tat;
+    public ObjectProperty<Integer> getArrivalTimeProperty() {
+        return arrivalTime.asObject();
     }
 
     public final StringProperty responseTimeProperty() {
         return responseTime;
     }
 
-    public final IntegerProperty waitingTimeProperty() {
-        return waitingTime;
+    public final ObjectProperty<Integer> waitingTimeProperty() {
+        return waitingTime.asObject();
+    }
+
+    public final StringProperty tatProperty() {
+        return tat;
     }
 
     public StringProperty nameProperty() {
@@ -71,11 +76,11 @@ public class PCB {
     }
 
     public void setFirstRunTime(int t) {
-        responseTime.set(String.valueOf(responseTime(t, arrivalTime)));
+        responseTime.set(String.valueOf(responseTime(t, arrivalTime.get())));
     }
 
     public void setFinishTime(int t) {
-        tat.set(String.valueOf(tat(t, arrivalTime)));
+        tat.set(String.valueOf(tat(t, arrivalTime.get())));
     }
 
     public boolean nextIoBurst() {
@@ -103,7 +108,7 @@ public class PCB {
     }
 
     public int getArrivalTime() {
-        return arrivalTime;
+        return arrivalTime.get();
     }
 
 }

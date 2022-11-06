@@ -6,8 +6,8 @@ import static javafx.scene.paint.Color.BLACK;
 import static javafx.scene.paint.Color.TRANSPARENT;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -36,9 +36,9 @@ public class MainView {
     protected Stage tableWindow = new Stage();
 
     protected Map<String, Shape> jobShapes = new HashMap<>();
-    protected List<Circle> cpuCircles = new LinkedList<>();
-    protected List<Label> cpuLabels = new LinkedList<>();
-    protected List<HBox> queueHBoxs = new LinkedList<>();
+    protected List<Circle> cpuCircles = new ArrayList<>();
+    protected List<Label> cpuLabels = new ArrayList<>();
+    protected List<HBox> queueHBoxs = new ArrayList<>();
 
     protected Circle ioCircle = deviceCircle();
     protected Label ioLabel = new Label(IDLE);
@@ -81,6 +81,8 @@ public class MainView {
         TableController tableController = fxmlLoader.getController();
         tableController.setData(computer.getJobs());
 
+        tableWindow.setX(0);
+        tableWindow.setY(0);
         tableWindow.setTitle("Таблиця процесів");
         tableWindow.show();
     }

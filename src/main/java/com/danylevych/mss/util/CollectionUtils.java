@@ -7,7 +7,7 @@ import java.util.Collection;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.value.ObservableValue;
 
-public class CollectionUtils {
+public final class CollectionUtils {
 
     private CollectionUtils() {
 

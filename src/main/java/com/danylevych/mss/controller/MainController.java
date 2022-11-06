@@ -1,10 +1,12 @@
 package com.danylevych.mss.controller;
 
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import static javafx.scene.paint.Color.BLACK;
 import static javafx.scene.paint.Color.RED;
 import static javafx.scene.paint.Color.TRANSPARENT;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
 
 import com.danylevych.mss.model.Computer;
 import com.danylevych.mss.model.PCB;
@@ -13,7 +15,6 @@ import com.danylevych.mss.model.event.Event;
 import com.danylevych.mss.model.event.EventListener;
 import com.danylevych.mss.view.MainView;
 
-import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -24,6 +25,9 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 
 public class MainController extends MainView implements EventListener {
+
+    private static ExecutorService threadExecutor = newSingleThreadExecutor();
+    private static final long PAUSE = 1000L;
 
     @FXML
     private void onJobsInfoSelect() {
@@ -130,21 +134,15 @@ public class MainController extends MainView implements EventListener {
     }
 
     private void setClock(int clock) {
-        Task<Void> pause = new Task<Void>() {
-            @Override
-            protected Void call() throws Exception {
-                Thread.sleep(1000L);
-                Platform.runLater(() -> clockLabel.setFill(BLACK));
-                return null;
-            }
-        };
-
+        Task<Void> pause = createPause(PAUSE);
         pause.setOnRunning(e -> clockLabel.setFill(RED));
         pause.setOnSucceeded(e -> {
+            clockLabel.setFill(BLACK);
             clockLabel.setText(String.valueOf(clock));
             continueSimulation();
         });
-        new Thread(pause).start();
+
+        threadExecutor.execute(pause);
     }
 
     private void highlight(Shape shape) {
@@ -152,18 +150,14 @@ public class MainController extends MainView implements EventListener {
     }
 
     private static void highlight(Shape shape, Runnable runAfter) {
-        Task<Void> highlight = new Task<Void>() {
-            @Override
-            protected Void call() throws Exception {
-                shape.setStroke(RED);
-                Thread.sleep(1000L);
-                shape.setStroke(BLACK);
-                runAfter.run();
-                return null;
-            }
-        };
+        Task<Void> pause = createPause(PAUSE);
+        pause.setOnRunning(e -> shape.setStroke(RED));
+        pause.setOnSucceeded(e -> {
+            shape.setStroke(BLACK);
+            runAfter.run();
+        });
 
-        new Thread(highlight).start();
+        threadExecutor.execute(pause);
     }
 
     private void continueSimulation() {
@@ -180,4 +174,13 @@ public class MainController extends MainView implements EventListener {
         return cpuCircles.get(cpuId);
     }
 
+    private static Task<Void> createPause(long time) {
+        return new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                Thread.sleep(time);
+                return null;
+            }
+        };
+    }
 }

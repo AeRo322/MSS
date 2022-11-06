@@ -49,6 +49,16 @@
 							<mainClass>mss/com.danylevych.mss.App</mainClass>
 						</configuration>
 					</execution>
+					<execution>
+						<!-- Configuration for debugging -->
+						<id>debug</id>
+						<configuration>
+							<options>
+								<option>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:8001</option>
+							</options>
+							<mainClass>mss/com.danylevych.mss.App</mainClass>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 		</plugins>
