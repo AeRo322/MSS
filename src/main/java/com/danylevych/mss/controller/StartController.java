@@ -77,13 +77,12 @@ public class StartController {
 
     @FXML
     private void onStartSimulation() throws IOException {
-        Sheduler sheduler = getSheduler(algorithm.getValue());
         ProcessQueue jobs = getEvents(inputMethod.getValue());
+        Sheduler sheduler = getSheduler(algorithm.getValue());
         Computer computer = new Computer(jobs, sheduler, nCpu, quantum);
 
         FXMLLoader fxmlLoader = App.setScene("Main.fxml");
         MainController mainController = fxmlLoader.getController();
-        computer.addEventListener(mainController);
         mainController.setComputer(computer);
     }
 

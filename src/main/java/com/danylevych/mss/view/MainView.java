@@ -69,7 +69,7 @@ public class MainView {
 
     public void setComputer(Computer computer) throws IOException {
         this.computer = computer;
-
+        
         computer.runningProperty().addListener(this::handleRunStateChange);
         computer.isDoneProperty().addListener(this::handleIsDoneChange);
 

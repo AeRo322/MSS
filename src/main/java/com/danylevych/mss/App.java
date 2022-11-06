@@ -13,11 +13,15 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) throws IOException {
-        App.primaryStage = primaryStage; // NOSONAR: Singleton
-        App.setScene("Start.fxml");
+        setPrimaryStage(primaryStage);
+        setScene("Start.fxml");
 
         primaryStage.setTitle("MSS: Multiprocessor Scheduling Simulator");
         primaryStage.show();
+    }
+
+    public static FXMLLoader setScene(String fxml) throws IOException {
+        return setScene(fxml, primaryStage);
     }
 
     public static FXMLLoader setScene(String fxml, Stage stage)
@@ -27,8 +31,8 @@ public class App extends Application {
         return fxmlLoader;
     }
 
-    public static FXMLLoader setScene(String fxml) throws IOException {
-        return setScene(fxml, primaryStage);
+    private static void setPrimaryStage(Stage primaryStage) {
+        App.primaryStage = primaryStage;
     }
 
     public static void main(String[] args) {

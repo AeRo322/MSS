@@ -4,6 +4,9 @@ import static javafx.scene.paint.Color.BLACK;
 import static javafx.scene.paint.Color.RED;
 import static javafx.scene.paint.Color.TRANSPARENT;
 
+import java.io.IOException;
+
+import com.danylevych.mss.model.Computer;
 import com.danylevych.mss.model.PCB;
 import com.danylevych.mss.model.ProcessQueue;
 import com.danylevych.mss.model.event.Event;
@@ -54,6 +57,12 @@ public class MainController extends MainView implements EventListener {
     }
 
     @Override
+    public void setComputer(Computer computer) throws IOException {
+        super.setComputer(computer);
+        computer.addEventListener(this);
+    }
+
+    @Override
     public void handle(Event event, int param) {
         switch (event) {
         case ADD_JOB -> addJob(param);
@@ -91,21 +100,21 @@ public class MainController extends MainView implements EventListener {
     }
 
     private void completeIoJob(int cpuId) {
-        highlight(setIoState(IDLE), () -> highlight(addJob(cpuId)));
+        highlight(setIoState(IDLE), () -> addJob(cpuId));
     }
 
     private void interrupt(int cpuId) {
-        highlight(setCpuState(IDLE, cpuId), () -> highlight(addJob(cpuId)));
+        highlight(setCpuState(IDLE, cpuId), () -> addJob(cpuId));
     }
 
     private void completeJob(int cpuId) {
         highlight(setCpuState(IDLE, cpuId));
     }
 
-    private Shape addJob(int cpuId) {
+    private void addJob(int cpuId) {
         int pos = computer.getSheduler().getLastAddedJobPos();
         ProcessQueue queue = computer.getSheduler().getReadyQueue(cpuId);
-        return addJob(queueHBoxs.get(cpuId), queue.get(pos).getName(), pos);
+        highlight(addJob(queueHBoxs.get(cpuId), queue.get(pos).getName(), pos));
     }
 
     private Shape addJob(HBox queue, String pName, int pos) {
