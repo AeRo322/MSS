@@ -36,9 +36,13 @@ public class Computer {
     private int jobsDone;
     private int clock;
 
+    private int nextJobIndex;
+
     public Computer(ProcessQueue jobs, Sheduler sheduler, int nCpu,
             int quantum) {
         this.jobs = observableArrayList(jobs);
+        this.jobs.sort(Computer::compareByArrivalTime);
+
         this.jobsToDo = jobs.size();
         this.sheduler = sheduler;
         this.quantum = quantum;
@@ -90,8 +94,10 @@ public class Computer {
     }
 
     private void addJobs() {
-        for (PCB job : jobs) {
+        for (int i = nextJobIndex; i < jobsToDo; i++) {
+            PCB job = jobs.get(i);
             if (job.getArrivalTime() == clock) {
+                nextJobIndex++;
                 fireEvent(Event.ADD_JOB, sheduler.addJob(job));
             }
         }
@@ -254,6 +260,10 @@ public class Computer {
 
     public BooleanProperty isDoneProperty() {
         return isDone;
+    }
+
+    private static int compareByArrivalTime(PCB pcb1, PCB pcb2) {
+        return Integer.compare(pcb1.getArrivalTime(), pcb2.getArrivalTime());
     }
 
 }
