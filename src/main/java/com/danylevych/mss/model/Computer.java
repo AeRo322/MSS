@@ -1,15 +1,18 @@
 package com.danylevych.mss.model;
 
+import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.Executors.newCachedThreadPool;
 import static javafx.collections.FXCollections.observableArrayList;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 import com.danylevych.mss.model.event.Event;
 import com.danylevych.mss.model.event.EventListener;
 import com.danylevych.mss.model.sheduler.Sheduler;
 
-import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ObservableList;
@@ -17,11 +20,7 @@ import javafx.collections.ObservableList;
 public class Computer {
 
     private final ProcessQueue ioWaitingQueue = new ProcessQueue();
-    private final List<EventListener> listeners = new ArrayList<>();
     private final IoDevice ioDevice = new IoDevice();
-
-    private final ObservableList<PCB> jobs;
-    private Thread currentTask;
 
     private final Sheduler sheduler;
     private final int jobsToDo;
@@ -32,16 +31,23 @@ public class Computer {
 
     private final BooleanProperty running = new SimpleBooleanProperty(false);
     private final BooleanProperty isDone = new SimpleBooleanProperty(false);
+
+    private final ExecutorService executorService = newCachedThreadPool();
+    private final List<EventListener> listeners = new ArrayList<>();
+    private final ObservableList<PCB> jobs;
+
+    private int nListenersDone;
     private boolean isStepMode;
+    private int nextJobIndex;
     private int jobsDone;
     private int clock;
 
-    private int nextJobIndex;
-
     public Computer(ProcessQueue jobs, Sheduler sheduler, int nCpu,
             int quantum) {
+        validateParams(jobs, sheduler, nCpu);
+
         this.jobs = observableArrayList(jobs);
-        this.jobs.sort(Computer::compareByArrivalTime);
+        this.jobs.sort(Comparator.comparingInt(PCB::getArrivalTime));
 
         this.jobsToDo = jobs.size();
         this.sheduler = sheduler;
@@ -58,32 +64,44 @@ public class Computer {
         this(jobs, sheduler, nCpu, -1);
     }
 
-    public void addEventListener(EventListener listener) {
-        this.listeners.add(listener);
+    private void
+            validateParams(ProcessQueue jobs, Sheduler sheduler, int nCpu) {
+        if (jobs == null || jobs.isEmpty()) {
+            throw new IllegalArgumentException();
+        }
+
+        if (nCpu <= 0) {
+            throw new IllegalArgumentException();
+        }
+
+        requireNonNull(sheduler);
     }
 
     public void run() {
-        running.set(true);
         if (listeners.isEmpty()) {
             work();
         } else {
-            currentTask = new Thread(this::work);
-            currentTask.start();
+            executorService.execute(this::work);
         }
     }
 
     private void work() {
-        isDone.set(jobsToDo == jobsDone);
+        running.set(true);
 
         while (!isDone.get()) {
 
             addJobs();
             handleInterrupts();
+
             assignCpuJobs();
-            execCpuJobs();
             assignIoJob();
+
+            execCpuJobs();
             execIoJob();
+
             incrementClock();
+
+            isDone.set(jobsToDo == jobsDone);
 
             if (isStepMode) {
                 break;
@@ -120,7 +138,7 @@ public class Computer {
     }
 
     private boolean areInterruptsEnabled() {
-        return quantum != -1;
+        return quantum > 0;
     }
 
     private void assignCpuJobs() {
@@ -149,6 +167,13 @@ public class Computer {
         }
     }
 
+    private void assignIoJob() {
+        if (!ioWaitingQueue.isEmpty() && ioDevice.isIdle()) {
+            ioDevice.setCurrentJob(ioWaitingQueue.removeFirst());
+            fireEvent(Event.JOB_ASSIGNED, -1);
+        }
+    }
+
     private void execCpuJobs() {
         for (int i = 0; i < nCpu; i++) {
             if (cpus[i].incrementRuntime()) {
@@ -170,13 +195,6 @@ public class Computer {
                 fireEvent(Event.JOB_DONE, cpuId);
             }
             cpu.setIdle();
-        }
-    }
-
-    private void assignIoJob() {
-        if (!ioWaitingQueue.isEmpty() && ioDevice.isIdle()) {
-            ioDevice.setCurrentJob(ioWaitingQueue.removeFirst());
-            fireEvent(Event.JOB_ASSIGNED, -1);
         }
     }
 
@@ -202,20 +220,41 @@ public class Computer {
 
     private void fireEvent(Event event, int param) {
         if (!listeners.isEmpty()) {
-            Platform.runLater(() -> notify(event, param));
-
-            try {
-                currentTask.join();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+            notify(event, param);
+            join();
         }
     }
 
     private void notify(Event event, int param) {
         for (EventListener listener : listeners) {
-            listener.handle(event, param);
+            executorService.execute(() -> listener.handle(event, param));
         }
+    }
+
+    private synchronized void join() {
+        while (listenersWorking()) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException(e);
+            }
+        }
+
+        nListenersDone = 0;
+    }
+
+    private boolean listenersWorking() {
+        return nListenersDone != listeners.size();
+    }
+
+    public void addEventListener(EventListener listener) {
+        this.listeners.add(listener);
+    }
+
+    public synchronized void listenerJobDone() {
+        nListenersDone++;
+        notifyAll();
     }
 
     public BooleanProperty runningProperty() {
@@ -254,16 +293,8 @@ public class Computer {
         return nCpu;
     }
 
-    public Thread getCurrentTask() {
-        return currentTask;
-    }
-
     public BooleanProperty isDoneProperty() {
         return isDone;
-    }
-
-    private static int compareByArrivalTime(PCB pcb1, PCB pcb2) {
-        return Integer.compare(pcb1.getArrivalTime(), pcb2.getArrivalTime());
     }
 
 }

@@ -15,6 +15,7 @@ import com.danylevych.mss.model.event.Event;
 import com.danylevych.mss.model.event.EventListener;
 import com.danylevych.mss.view.MainView;
 
+import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -27,7 +28,7 @@ import javafx.scene.shape.Shape;
 public class MainController extends MainView implements EventListener {
 
     private static ExecutorService threadExecutor = newSingleThreadExecutor();
-    private static final long PAUSE = 1000L;
+    private long pauseTime = 1000L;
 
     @FXML
     private void onJobsInfoSelect() {
@@ -45,19 +46,27 @@ public class MainController extends MainView implements EventListener {
 
     @FXML
     private void onStep() {
+        setDefaultPauseTime();
         computer.setStepMode(true);
         computer.run();
     }
 
     @FXML
     private void onRun() {
+        setDefaultPauseTime();
         computer.setStepMode(false);
         computer.run();
     }
 
+    private void setDefaultPauseTime() {
+        pauseTime = 1000L;
+    }
+
     @FXML
     private void onSolve() {
-        //
+        pauseTime = 0;
+        computer.setStepMode(false);
+        computer.run();
     }
 
     @Override
@@ -68,6 +77,10 @@ public class MainController extends MainView implements EventListener {
 
     @Override
     public void handle(Event event, int param) {
+        Platform.runLater(() -> onHandle(event, param));
+    }
+
+    private void onHandle(Event event, int param) {
         switch (event) {
         case ADD_JOB -> addJob(param);
         case SET_CLOCK -> setClock(param);
@@ -134,7 +147,7 @@ public class MainController extends MainView implements EventListener {
     }
 
     private void setClock(int clock) {
-        Task<Void> pause = createPause(PAUSE);
+        Task<Void> pause = createPause(pauseTime);
         pause.setOnRunning(e -> clockLabel.setFill(RED));
         pause.setOnSucceeded(e -> {
             clockLabel.setFill(BLACK);
@@ -149,8 +162,8 @@ public class MainController extends MainView implements EventListener {
         highlight(shape, this::continueSimulation);
     }
 
-    private static void highlight(Shape shape, Runnable runAfter) {
-        Task<Void> pause = createPause(PAUSE);
+    private void highlight(Shape shape, Runnable runAfter) {
+        Task<Void> pause = createPause(pauseTime);
         pause.setOnRunning(e -> shape.setStroke(RED));
         pause.setOnSucceeded(e -> {
             shape.setStroke(BLACK);
@@ -161,7 +174,7 @@ public class MainController extends MainView implements EventListener {
     }
 
     private void continueSimulation() {
-        computer.getCurrentTask().interrupt();
+        computer.listenerJobDone();
     }
 
     private Circle setIoState(String state) {
@@ -183,4 +196,5 @@ public class MainController extends MainView implements EventListener {
             }
         };
     }
+
 }
