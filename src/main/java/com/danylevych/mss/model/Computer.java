@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
+import com.danylevych.mss.App;
 import com.danylevych.mss.model.event.Event;
 import com.danylevych.mss.model.event.EventListener;
 import com.danylevych.mss.model.sheduler.Sheduler;
@@ -58,6 +59,8 @@ public class Computer {
         for (int i = 0; i < nCpu; i++) {
             cpus[i] = new CPU();
         }
+
+        App.addOnExit(executorService::shutdown);
     }
 
     public Computer(ProcessQueue jobs, Sheduler sheduler, int nCpu) {

@@ -8,6 +8,7 @@ import static javafx.scene.paint.Color.TRANSPARENT;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 
+import com.danylevych.mss.App;
 import com.danylevych.mss.model.Computer;
 import com.danylevych.mss.model.PCB;
 import com.danylevych.mss.model.ProcessQueue;
@@ -27,7 +28,7 @@ import javafx.scene.shape.Shape;
 
 public class MainController extends MainView implements EventListener {
 
-    private static ExecutorService threadExecutor = newSingleThreadExecutor();
+    private final ExecutorService executorService = newSingleThreadExecutor();
     private long pauseTime = 1000L;
 
     @FXML
@@ -73,6 +74,7 @@ public class MainController extends MainView implements EventListener {
     public void setComputer(Computer computer) throws IOException {
         super.setComputer(computer);
         computer.addEventListener(this);
+        App.addOnExit(executorService::shutdown);
     }
 
     @Override
@@ -155,7 +157,7 @@ public class MainController extends MainView implements EventListener {
             continueSimulation();
         });
 
-        threadExecutor.execute(pause);
+        executorService.execute(pause);
     }
 
     private void highlight(Shape shape) {
@@ -170,7 +172,7 @@ public class MainController extends MainView implements EventListener {
             runAfter.run();
         });
 
-        threadExecutor.execute(pause);
+        executorService.execute(pause);
     }
 
     private void continueSimulation() {
