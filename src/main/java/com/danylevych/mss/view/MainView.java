@@ -141,6 +141,27 @@ public class MainView {
         return circle;
     }
 
+    private void handleRunStateChange(
+            ObservableValue<? extends Boolean> o,
+            Boolean oldValue,
+            Boolean isRunning) {
+        setButtonsDisable(isRunning || computer.isDoneProperty().get());
+        pauseButton.setDisable(!isRunning);
+    }
+
+    private void handleIsDoneChange(
+            ObservableValue<? extends Boolean> o,
+            Boolean oldValue,
+            Boolean isDone) {
+        setButtonsDisable(isDone || computer.runningProperty().get());
+    }
+
+    private void setButtonsDisable(boolean isRunningOrDone) {
+        startButton.setDisable(isRunningOrDone);
+        solveButton.setDisable(isRunningOrDone);
+        stepButton.setDisable(isRunningOrDone);
+    }
+
     private static int idkMan(int cpuCount) {
         double lmao;
         if (cpuCount >= 16) {
@@ -151,23 +172,6 @@ public class MainView {
             lmao = 2.0;
         }
         return (int) ceil(cpuCount / lmao);
-    }
-
-    private void handleRunStateChange(
-            ObservableValue<? extends Boolean> o,
-            Boolean oldValue,
-            Boolean isRunning) {
-        startButton.setDisable(isRunning);
-        pauseButton.setDisable(!isRunning);
-    }
-
-    private void handleIsDoneChange(
-            ObservableValue<? extends Boolean> o,
-            Boolean oldValue,
-            Boolean isDone) {
-        solveButton.setDisable(isDone);
-        startButton.setDisable(isDone);
-        stepButton.setDisable(isDone);
     }
 
 }

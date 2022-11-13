@@ -64,8 +64,13 @@ public class Computer {
         this(jobs, sheduler, nCpu, -1);
     }
 
-    private void
-            validateParams(ProcessQueue jobs, Sheduler sheduler, int nCpu) {
+    private static void validateParams(
+            ProcessQueue jobs,
+            Sheduler sheduler,
+            int nCpu) {
+
+        requireNonNull(sheduler);
+
         if (jobs == null || jobs.isEmpty()) {
             throw new IllegalArgumentException();
         }
@@ -73,11 +78,13 @@ public class Computer {
         if (nCpu <= 0) {
             throw new IllegalArgumentException();
         }
-
-        requireNonNull(sheduler);
     }
 
-    public void run() {
+    public synchronized void run() {
+        if (running.get()) {
+            throw new IllegalStateException("Already running");
+        }
+
         if (listeners.isEmpty()) {
             work();
         } else {
