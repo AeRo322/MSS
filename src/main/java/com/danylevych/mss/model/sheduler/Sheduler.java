@@ -7,6 +7,9 @@ import com.danylevych.mss.model.ProcessQueue;
 
 public interface Sheduler {
 
+    /**
+     * @return queue ID
+     */
     int addJob(PCB job);
 
     PCB nextJob(int cpu);

@@ -1,17 +1,17 @@
 package com.danylevych.mss.model.sheduler.impl;
 
+import java.util.Comparator;
+
 import com.danylevych.mss.model.PCB;
+import com.danylevych.mss.model.ProcessQueue;
 import com.danylevych.mss.model.sheduler.BaseSheduler;
 
-public class FCFS extends BaseSheduler {
+public class SJF extends BaseSheduler {
 
-    public FCFS(boolean hasGlobalQueue, int nCpu) {
+    public SJF(boolean hasGlobalQueue, int nCpu) {
         super(hasGlobalQueue, nCpu);
     }
 
-    /**
-     * @return queue ID
-     */
     @Override
     public int addJob(PCB job) {
         int queue = 0;
@@ -22,7 +22,10 @@ public class FCFS extends BaseSheduler {
             queue = addToLeastLoadedQueue(job);
         }
 
-        lastAddedJobPos = getReadyQueue(queue).size() - 1;
+        ProcessQueue readyQueue = getReadyQueue(queue);
+        readyQueue.sort(Comparator.comparingInt(PCB::getArrivalTime));
+
+        lastAddedJobPos = readyQueue.indexOf(job);
 
         return queue;
     }

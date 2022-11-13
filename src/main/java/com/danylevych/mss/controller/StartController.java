@@ -12,6 +12,7 @@ import com.danylevych.mss.model.Computer;
 import com.danylevych.mss.model.ProcessQueue;
 import com.danylevych.mss.model.sheduler.Sheduler;
 import com.danylevych.mss.model.sheduler.impl.FCFS;
+import com.danylevych.mss.model.sheduler.impl.SJF;
 
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
@@ -29,6 +30,7 @@ public class StartController {
     private static final String FILE = "Вихідний файл";
 
     private static final String FCFS = "FCFS";
+    private static final String SJF = "SJF";
     private static final String RR = "RR";
 
     private boolean hasGlobalQueue;
@@ -71,7 +73,7 @@ public class StartController {
         inputMethod.setValue(FILE);
 
         algorithm.valueProperty().addListener(this::handleAlgorithmChange);
-        algorithm.getItems().addAll(FCFS, RR);
+        algorithm.getItems().addAll(FCFS, SJF, RR);
         algorithm.setValue(FCFS);
     }
 
@@ -110,6 +112,10 @@ public class StartController {
         case FCFS -> {
             quantum = -1;
             yield createFCSF();
+        }
+        case SJF -> {
+            quantum = -1;
+            yield new SJF(hasGlobalQueue, nCpu);
         }
         case RR -> {
             quantum = parseInt(quantumInput.getText());
