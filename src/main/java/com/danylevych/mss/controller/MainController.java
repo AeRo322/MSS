@@ -31,6 +31,10 @@ public class MainController extends MainView implements EventListener {
     private final ExecutorService executorService = newSingleThreadExecutor();
     private long pauseTime = 1000L;
 
+    public MainController() {
+        App.addOnExit(executorService::shutdown);
+    }
+
     @FXML
     private void onJobsInfoSelect() {
         if (tableWindow.isShowing()) {
@@ -74,7 +78,6 @@ public class MainController extends MainView implements EventListener {
     public void setComputer(Computer computer) throws IOException {
         super.setComputer(computer);
         computer.addEventListener(this);
-        App.addOnExit(executorService::shutdown);
     }
 
     @Override
