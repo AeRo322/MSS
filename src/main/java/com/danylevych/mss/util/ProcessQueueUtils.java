@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 import com.danylevych.mss.model.PCB;
 import com.danylevych.mss.model.ProcessQueue;
 
-public class ProcessQueueUtils {
+public final class ProcessQueueUtils {
 
     private static Random random = new Random();
 
@@ -33,8 +33,6 @@ public class ProcessQueueUtils {
 
         try (Stream<String> lines = Files.lines(Path.of(inputFile))) {
             lines.map(line -> line.split(" ")).forEach(job -> {
-                final int arrivalTime = parseInt(job[0]);
-
                 List<Integer> cpuBurstsTime = splitIntegers(job[1]);
                 if (cpuBurstsTime.isEmpty()) {
                     throw new IllegalStateException(Arrays.toString(job));
@@ -44,6 +42,7 @@ public class ProcessQueueUtils {
                         job.length > 2 ? splitIntegers(job[2])
                                        : new ArrayList<>();
 
+                final int arrivalTime = parseInt(job[0]);
                 PCB event = new PCB(pid.getAndIncrement(),
                         arrivalTime,
                         cpuBurstsTime,
@@ -62,25 +61,29 @@ public class ProcessQueueUtils {
         ProcessQueue events = new ProcessQueue();
 
         for (int i = 0; i < nEvents; i++) {
-            List<Integer> cpuBurstsTime = new ArrayList<>();
-            for (int j = 0; j < cpuBurstsTime.size(); j++) {
-                cpuBurstsTime.add(random.nextInt(10) + 1);
+            final int nCpuBursts = random.nextInt(3) + 1;
+            List<Integer> cpuBurstsTime = new ArrayList<>(nCpuBursts);
+            for (int j = 0; j < nCpuBursts; j++) {
+                cpuBurstsTime.add(random.nextInt(5) + 1);
             }
 
-            // cpuBurstsTime.length - 1
-            List<Integer> ioBurstsTime = new ArrayList<>();
-            for (int j = 0; j < ioBurstsTime.size(); j++) {
-                ioBurstsTime.add(random.nextInt(5) + 1);
+            final int nIoBursts = nCpuBursts - 1;
+            List<Integer> ioBurstsTime = new ArrayList<>(nIoBursts);
+            if (nCpuBursts > 2) {
+                for (int j = 0; j < nIoBursts; j++) {
+                    ioBurstsTime.add(random.nextInt(5) + 1);
+                }
             }
 
-            events.add(new PCB(i, 0, cpuBurstsTime, ioBurstsTime));
+            final int arrivalTime = random.nextInt(5);
+            events.add(new PCB(i, arrivalTime, cpuBurstsTime, ioBurstsTime));
         }
 
         return events;
     }
 
-    public static ProcessQueue
-           getSmallestQueue(Collection<ProcessQueue> queues) {
+    public static ProcessQueue getSmallestQueue(
+            Collection<ProcessQueue> queues) {
         return queues.stream().min(comparingInt(List::size)).orElseThrow();
     }
 

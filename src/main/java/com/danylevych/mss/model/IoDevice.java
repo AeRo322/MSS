@@ -2,7 +2,7 @@ package com.danylevych.mss.model;
 
 public class IoDevice {
 
-    private PCB currentJob = null;
+    private PCB currentJob;
 
     public void setIdle() {
         currentJob = null;
