@@ -39,6 +39,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.RowConstraints?>
@@ -88,8 +89,11 @@
                   <Font size="14.0" />
                </font>
             </Label>
-            <RadioButton fx:id="hasDistibutedQueues" mnemonicParsing="false" selected="true" text="Розподілені черги" GridPane.columnIndex="1" GridPane.columnSpan="3" GridPane.rowIndex="2" />
-            <RadioButton mnemonicParsing="false" text="Глобальна черга" GridPane.columnIndex="2" GridPane.columnSpan="2" GridPane.rowIndex="2" />
+            <RadioButton fx:id="hasDistibutedQueues" mnemonicParsing="false" selected="true" text="Розподілені черги" GridPane.columnIndex="1" GridPane.columnSpan="3" GridPane.rowIndex="2">
+               <toggleGroup>
+                  <ToggleGroup fx:id="readyQueueType" />
+               </toggleGroup></RadioButton>
+            <RadioButton mnemonicParsing="false" text="Глобальна черга" toggleGroup="$readyQueueType" GridPane.columnIndex="2" GridPane.columnSpan="2" GridPane.rowIndex="2" />
             <Label alignment="CENTER" text="Налаштування моделі" GridPane.columnSpan="4" GridPane.halignment="CENTER">
                <font>
                   <Font size="14.0" />
