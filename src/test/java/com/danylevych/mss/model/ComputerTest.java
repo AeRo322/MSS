@@ -7,7 +7,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Test;
@@ -17,59 +16,42 @@ import com.danylevych.mss.model.sheduler.impl.FCFS;
 
 public class ComputerTest {
 
-    @Test
-    public void testFCFS() {
-        final int nCpu = 2;
-        final boolean hasGlobalQueue = true;
-        ProcessQueue jobs = new ProcessQueue();
+	@Test
+	public void testFCFS() {
+		final int nCpu = 2;
+		final boolean hasGlobalQueue = true;
+		ProcessQueue jobs = new ProcessQueue();
 
-        final int nJobs = 3;
-        final List<Integer> cpuBurstsTime = asList(100, 20, 20);
+		final int nJobs = 4;
+		final List<Integer> cpuBurstsTime = asList(100, 50, 50, 50);
 
-        for (int i = 0; i < nJobs; i++) {
-            PCB job = new PCB(i,
-                    0,
-                    asList(cpuBurstsTime.get(i)),
-                    new ArrayList<>());
+		for (int i = 0; i < nJobs; i++) {
+			PCB job = new PCB(i, 0, asList(cpuBurstsTime.get(i)), new ArrayList<>());
 
-            jobs.add(job);
-        }
+			jobs.add(job);
+		}
 
-        Sheduler sheduler = new FCFS(hasGlobalQueue, nCpu);
-        Computer computer = new Computer(jobs, sheduler, nCpu);
+		Sheduler sheduler = new FCFS(hasGlobalQueue, nCpu);
+		Computer computer = new Computer(jobs, sheduler, nCpu);
 
-        assertEquals(nJobs, sheduler.getReadyQueues().get(0).size());
+		computer.run();
 
-        computer.run();
+		assertTrue(sheduler.getGlobalQueue().isEmpty());
+		assertTrue(computer.getIoWaitingQueue().isEmpty());
+		assertEquals(hasGlobalQueue, computer.getSheduler().hasGlobalQueue());
 
-        List<ProcessQueue> readyQueues =
-                computer.getSheduler().getReadyQueues();
+		final double[] expectedCpuUtil = { 100.0, 66.6 };
+		double[] actualCpuUtil = cpusUsage(computer);		
+		for (int i = 0; i < actualCpuUtil.length; i++) {
+			assertEquals(expectedCpuUtil[i], actualCpuUtil[i], 0.1);
+		}
+		
+		assertEquals(150, computer.getClock());
 
-        assertEquals(nCpu, readyQueues.size());
+		List<Integer> actualWaits = computer.getJobs().stream().map(PCB::getWaitingTime).toList();
 
-        for (int i = 0; i < readyQueues.size(); i++) {
-            assertTrue(readyQueues.get(i).isEmpty());
-        }
-
-        assertTrue(computer.getIoWaitingQueue().isEmpty());
-        assertEquals(hasGlobalQueue, computer.getSheduler().hasGlobalQueue());
-
-        final double[] cpuUtil = {
-            100.0,
-            0.0
-        };
-
-        assertTrue(Arrays.equals(cpusUsage(computer), cpuUtil));
-        assertEquals(140, computer.getClock());
-
-        final List<Integer> expectedWaits = asList(0, 100, 120);
-        List<Integer> actualWaits = new ArrayList<>();
-        computer.getJobs().forEach(e -> actualWaits.add(e.getWaitingTime()));
-
-        assertEquals(expectedWaits, actualWaits);
-
-        final double avWaitTime = (0.0 + 100.0 + 120.0) / 3.0;
-        assertEquals(avWaitTime, averageWaitTime(computer), 0.01);
-    }
+		assertEquals(asList(0, 0, 50, 100), actualWaits);
+		assertEquals(150.0 / nJobs, averageWaitTime(computer), 0.1);
+	}
 
 }

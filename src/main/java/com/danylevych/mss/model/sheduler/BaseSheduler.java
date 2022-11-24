@@ -35,10 +35,6 @@ public abstract class BaseSheduler implements Sheduler {
         if (!hasNextJob(cpu)) {
             throw new NoSuchElementException();
         }
-
-        if (lastAddedJobPos > 0) {
-            lastAddedJobPos--;
-        }
         
         return readyQueues.get(cpu).removeFirst();
     }
